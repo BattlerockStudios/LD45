@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -20,11 +21,17 @@ public class Creature : MonoBehaviour
     [SerializeField]
     private float m_moveSpeed = 1f;
 
-    private void Start()
+    private EnvironmentController m_environmentController = null;
+
+    private IEnumerator Start()
     {
-        m_stateMachine.AddState(new EggState(m_eggVisual, m_creatureVisual));
+        // ZAS: Yes, this is bad habit... but will work for now
+        m_environmentController = Component.FindObjectOfType<EnvironmentController>() ?? throw new NullReferenceException($"{nameof(EnvironmentController)} not found!");
+        yield return m_environmentController.WaitForStart();
+
+        m_stateMachine.AddState(new EggState(m_eggVisual, m_creatureVisual, m_environmentController));
         m_stateMachine.AddState(new CreatureIdleState());
-        m_stateMachine.AddState(new CreatureMoveState(transform, m_moveSpeed));
+        m_stateMachine.AddState(new CreatureMoveState(transform, m_moveSpeed, m_environmentController));
 
         m_stateMachine.Start(nameof(EggState));
     }
@@ -39,12 +46,14 @@ public class Creature : MonoBehaviour
         private DateTime m_exitTime = DateTime.MinValue;
         private readonly GameObject m_eggVisual = null;
         private readonly GameObject m_creatureVisual = null;
+        private readonly EnvironmentController m_environmentController = null;
 
-        public EggState(GameObject eggVisual, GameObject creatureVisual)
+        public EggState(GameObject eggVisual, GameObject creatureVisual, EnvironmentController environmentController)
             : base(nameof(EggState))
         {
             m_eggVisual = eggVisual;
             m_creatureVisual = creatureVisual;
+            m_environmentController = environmentController;
 
             m_eggVisual.SetActive(true);
             m_creatureVisual.SetActive(false);
@@ -53,6 +62,7 @@ public class Creature : MonoBehaviour
         protected override void OnEnter()
         {
             m_exitTime = DateTime.UtcNow.AddSeconds(UnityEngine.Random.Range(5, 10));
+            m_environmentController.RevealPoint(m_eggVisual.transform.position);
         }
 
         protected override void OnExit()
@@ -84,7 +94,7 @@ public class Creature : MonoBehaviour
 
         protected override void OnEnter()
         {
-            m_exitTime = DateTime.UtcNow.AddSeconds(UnityEngine.Random.Range(1, 10));
+            m_exitTime = DateTime.UtcNow.AddSeconds(UnityEngine.Random.Range(1, 2));
         }
 
         protected override void OnExit()
@@ -107,12 +117,14 @@ public class Creature : MonoBehaviour
 
         private readonly Transform m_creatureTransform = null;
         private readonly float m_moveSpeed = 0f;
+        private readonly EnvironmentController m_environmentController = null;
 
-        public CreatureMoveState(Transform transform, float moveSpeed)
+        public CreatureMoveState(Transform transform, float moveSpeed, EnvironmentController environmentController)
           : base(nameof(CreatureMoveState))
         {
             m_creatureTransform = transform;
             m_moveSpeed = moveSpeed;
+            m_environmentController = environmentController;
         }
 
         protected override void OnEnter()
@@ -166,6 +178,7 @@ public class Creature : MonoBehaviour
                         poss.y += t;
 
                         m_creatureTransform.position = poss;
+                        m_environmentController.RevealPoint(poss);
                     }
                 );
 
@@ -186,6 +199,7 @@ public class Creature : MonoBehaviour
                     poss.y += t;
 
                     m_creatureTransform.position = poss;
+                    m_environmentController.RevealPoint(poss);
                 }
             );
 
