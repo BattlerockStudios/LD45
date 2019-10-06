@@ -53,7 +53,8 @@ public struct GameEvent
 
 public enum GameEventType
 {
-    Bell
+    Bell,
+    Food
 }
 
 public class GameManager : MonoBehaviour

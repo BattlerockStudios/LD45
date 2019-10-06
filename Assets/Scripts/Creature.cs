@@ -11,6 +11,7 @@ public class Creature : MonoBehaviour
 {
 
     private const string LAST_BELL = "lastBell";
+    private const string HUNGRY = "hungry";
 
     private readonly StateMachine m_stateMachine = new StateMachine();
     private readonly Guid m_id = Guid.NewGuid();
@@ -20,7 +21,10 @@ public class Creature : MonoBehaviour
 
     [SerializeField]
     private GameObject m_eggShellVisual = null;
-    
+
+    [SerializeField]
+    private GameObject m_emoteVisual = null;
+
     private GameObject m_creatureVisual = null;
 
     [SerializeField]
@@ -28,6 +32,19 @@ public class Creature : MonoBehaviour
 
     [SerializeField]
     private float m_moveSpeed = 1f;
+
+    [SerializeField]
+    [Range(0, 100)]
+    private int m_hungerMeter = 0;
+
+    [SerializeField]
+    private GameObject m_exclamationIcon = null;
+
+    [SerializeField]
+    private GameObject m_questionMarkIcon = null;
+
+    [SerializeField]
+    private GameObject m_hungryIcon = null;
 
     private EnvironmentController m_environmentController = null;
     private GameManager m_gameManager = null;
@@ -43,7 +60,7 @@ public class Creature : MonoBehaviour
 
         m_creatureVisual = m_creatureVisualsArray != null && m_creatureVisualsArray.Length > 0 ? m_creatureVisualsArray[UnityEngine.Random.Range(0, m_creatureVisualsArray.Length)] : throw new NullReferenceException($"{nameof(m_creatureVisualsArray)} is null or empty!");
 
-        m_stateMachine.AddState(new EggState(m_eggVisual, m_eggShellVisual, m_creatureVisual, m_environmentController));
+        m_stateMachine.AddState(new EggState(m_eggVisual, m_eggShellVisual, m_creatureVisual, m_emoteVisual, m_environmentController));
         m_stateMachine.AddState(new CreatureIdleState());
         m_stateMachine.AddState(new CreatureMoveState(transform, m_moveSpeed, m_environmentController));
 
@@ -68,6 +85,9 @@ public class Creature : MonoBehaviour
             case GameEventType.Bell:
                 m_stateMachine.SetBlackboardValue(LAST_BELL, gameEvent.Position);
                 break;
+            case GameEventType.Food:
+                m_stateMachine.SetBlackboardValue(HUNGRY, gameEvent.Position);
+                break;
             default:
                 Debug.LogError($"Unhandled event {gameEvent.EventType}");
                 break;
@@ -81,17 +101,20 @@ public class Creature : MonoBehaviour
         private readonly GameObject m_eggShellVisual = null;
 
         private readonly GameObject m_creatureVisual = null;
+        private readonly GameObject m_emoteVisual = null;
         private readonly EnvironmentController m_environmentController = null;
 
-        public EggState(GameObject eggVisual, GameObject eggShellVisual, GameObject creatureVisual, EnvironmentController environmentController)
+        public EggState(GameObject eggVisual, GameObject eggShellVisual, GameObject creatureVisual, GameObject emoteVisual, EnvironmentController environmentController)
             : base(nameof(EggState))
         {
             m_eggVisual = eggVisual;
             m_eggShellVisual = eggShellVisual;
+            m_emoteVisual = emoteVisual;
             m_creatureVisual = GameObject.Instantiate(creatureVisual, eggVisual.transform.parent);
             m_environmentController = environmentController;
 
             m_eggVisual.SetActive(true);
+            m_emoteVisual.SetActive(false);
             m_eggShellVisual.SetActive(false);            
             m_creatureVisual.SetActive(false);
         }
@@ -161,7 +184,6 @@ public class Creature : MonoBehaviour
 
     private class CreatureMoveState : AbstractState
     {
-
         private readonly Transform m_creatureTransform = null;
         private readonly float m_moveSpeed = 0f;
         private readonly EnvironmentController m_environmentController = null;
@@ -279,4 +301,43 @@ public class Creature : MonoBehaviour
 
     }
 
+    private class CreatureHungryState : AbstractState
+    {
+        private readonly GameObject m_hungerIcon = null;
+        private DateTime m_exitTime = DateTime.MinValue;
+
+        public CreatureHungryState(GameObject hungerIcon)
+            : base(nameof(CreatureHungryState))
+        {
+            m_hungerIcon = hungerIcon;
+        }
+
+        protected override void OnEnter()
+        {
+            m_exitTime = DateTime.UtcNow.AddSeconds(UnityEngine.Random.Range(1, 2));
+        }
+
+        protected override void OnExit()
+        {
+            m_exitTime = DateTime.MinValue;
+        }
+
+        protected override void OnUpdate()
+        {
+            // ZAS: If there is a bell, then we want to get moving!
+            if (m_blackboardValues.ContainsKey(LAST_BELL))
+            {
+                ExitToState(nameof(CreatureMoveState));
+                return;
+            }
+
+            // ZAS: If our random timer is expired, do something else
+            if (DateTime.UtcNow > m_exitTime)
+            {
+                ExitToState(nameof(CreatureMoveState));
+                return;
+            }
+        }
+
+    }
 }
