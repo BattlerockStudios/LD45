@@ -28,7 +28,7 @@ public class EnvironmentController : MonoBehaviour
 
     public IEnumerator WaitForStart()
     {
-        while(!m_isStarted)
+        while (!m_isStarted)
         {
             yield return null;
         }
@@ -41,6 +41,12 @@ public class EnvironmentController : MonoBehaviour
         var hitTransforms = Physics.OverlapSphere(point, 1f).Select(h => h.transform).Distinct();
         foreach (var hitTransform in hitTransforms)
         {
+            // ZAS: We only want to consider direct children
+            if (hitTransform.parent != transform)
+            {
+                continue;
+            }
+
             if (m_animatingList.Contains(hitTransform))
             {
                 continue;
@@ -58,6 +64,12 @@ public class EnvironmentController : MonoBehaviour
         var hitTransforms = Physics.SphereCastAll(start, 1f, (end - start).normalized, (end - start).magnitude).Select(h => h.transform).Distinct();
         foreach (var hitTransform in hitTransforms)
         {
+            // ZAS: We only want to consider direct children
+            if (hitTransform.parent != transform)
+            {
+                continue;
+            }
+
             if (m_animatingList.Contains(hitTransform))
             {
                 continue;

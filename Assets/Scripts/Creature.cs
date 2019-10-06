@@ -10,7 +10,10 @@ using UnityEngine;
 public class Creature : MonoBehaviour
 {
 
+    private const string LAST_BELL = "lastBell";
+
     private readonly StateMachine m_stateMachine = new StateMachine();
+    private readonly Guid m_id = Guid.NewGuid();
 
     [SerializeField]
     private GameObject m_eggVisual = null;
@@ -22,11 +25,15 @@ public class Creature : MonoBehaviour
     private float m_moveSpeed = 1f;
 
     private EnvironmentController m_environmentController = null;
+    private GameManager m_gameManager = null;
 
     private IEnumerator Start()
     {
         // ZAS: Yes, this is bad habit... but will work for now
+        m_gameManager = Component.FindObjectOfType<GameManager>() ?? throw new NullReferenceException($"{nameof(GameManager)} not found");
         m_environmentController = Component.FindObjectOfType<EnvironmentController>() ?? throw new NullReferenceException($"{nameof(EnvironmentController)} not found!");
+
+        yield return m_gameManager.WaitForStart();
         yield return m_environmentController.WaitForStart();
 
         m_stateMachine.AddState(new EggState(m_eggVisual, m_creatureVisual, m_environmentController));
@@ -39,6 +46,25 @@ public class Creature : MonoBehaviour
     private void Update()
     {
         m_stateMachine.Update();
+
+        var newEvents = m_gameManager.CheckEvents(m_id.ToString());
+        for (int i = 0; i < newEvents.Length; i++)
+        {
+            HandleEvent(newEvents[i]);
+        }
+    }
+
+    private void HandleEvent(GameEvent gameEvent)
+    {
+        switch (gameEvent.EventType)
+        {
+            case GameEventType.Bell:
+                m_stateMachine.SetBlackboardValue(LAST_BELL, gameEvent.Position);
+                break;
+            default:
+                Debug.LogError($"Unhandled event {gameEvent.EventType}");
+                break;
+        }
     }
 
     private class EggState : AbstractState
@@ -104,9 +130,18 @@ public class Creature : MonoBehaviour
 
         protected override void OnUpdate()
         {
+            // ZAS: If there is a bell, then we want to get moving!
+            if (m_blackboardValues.ContainsKey(LAST_BELL))
+            {
+                ExitToState(nameof(CreatureMoveState));
+                return;
+            }
+
+            // ZAS: If our random timer is expired, do something else
             if (DateTime.UtcNow > m_exitTime)
             {
                 ExitToState(nameof(CreatureMoveState));
+                return;
             }
         }
 
@@ -129,8 +164,19 @@ public class Creature : MonoBehaviour
 
         protected override void OnEnter()
         {
-            var randomInCircle = UnityEngine.Random.insideUnitCircle;
-            var targetPosition = m_creatureTransform.position + (new Vector3(randomInCircle.x, 0f, randomInCircle.y) * 2f);
+            var targetPosition = Vector3.zero;
+            if (m_blackboardValues.ContainsKey(LAST_BELL))
+            {
+                targetPosition = (Vector3)m_blackboardValues[LAST_BELL];
+
+                // ZAS: We are consuming this bell event
+                m_blackboardValues.Remove(LAST_BELL);
+            }
+            else
+            {
+                var randomInCircle = UnityEngine.Random.insideUnitCircle;
+                targetPosition = m_creatureTransform.position + (new Vector3(randomInCircle.x, 0f, randomInCircle.y) * m_moveSpeed);
+            }
 
             MoveToTargetAsync(targetPosition);
         }
@@ -158,6 +204,11 @@ public class Creature : MonoBehaviour
             await AnimationUtility.AnimateOverTime(200, p => m_creatureTransform.rotation = Quaternion.Slerp(start, end, p));
         }
 
+        private bool ShouldBreakMovement()
+        {
+            return m_blackboardValues.ContainsKey(LAST_BELL);
+        }
+
         private async Task TranslateToTargetAsync(Vector3 target)
         {
             var start = m_creatureTransform.position;
@@ -166,6 +217,11 @@ public class Creature : MonoBehaviour
             var segments = Mathf.FloorToInt(maxMagnitude / m_moveSpeed);
             for (int i = 0; i < segments; i++)
             {
+                if (ShouldBreakMovement())
+                {
+                    break;
+                }
+
                 var atStart = m_creatureTransform.position;
                 var atEnd = atStart + (vectorToTarget.normalized * m_moveSpeed);
                 await AnimationUtility.AnimateOverTime(
@@ -187,23 +243,26 @@ public class Creature : MonoBehaviour
                 await Task.Delay(500);
             }
 
-            var atStart2 = m_creatureTransform.position;
-            var atEnd2 = target;
-            await AnimationUtility.AnimateOverTime(
-                1000,
-                x =>
-                {
-                    var t = -(4f * Mathf.Pow(x - .5f, 2)) + 1;
+            if (!ShouldBreakMovement())
+            {
+                var atStart2 = m_creatureTransform.position;
+                var atEnd2 = target;
+                await AnimationUtility.AnimateOverTime(
+                    1000,
+                    x =>
+                    {
+                        var t = -(4f * Mathf.Pow(x - .5f, 2)) + 1;
 
-                    var poss = Vector3.Lerp(atStart2, atEnd2, x);
-                    poss.y += t;
+                        var poss = Vector3.Lerp(atStart2, atEnd2, x);
+                        poss.y += t;
 
-                    m_creatureTransform.position = poss;
-                    m_environmentController.RevealPoint(poss);
-                }
-            );
+                        m_creatureTransform.position = poss;
+                        m_environmentController.RevealPoint(poss);
+                    }
+                );
 
-            m_creatureTransform.position = atEnd2;
+                m_creatureTransform.position = atEnd2;
+            }
         }
 
     }

@@ -19,6 +19,11 @@ public class StateMachine
         SetState(m_states[state]);
     }
 
+    public void SetBlackboardValue(string key, object value)
+    {
+        m_blackboardValues[key] = value;
+    }
+
     public void Update()
     {
         if (m_states.Count == 0)
