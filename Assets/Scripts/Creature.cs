@@ -19,6 +19,10 @@ public class Creature : MonoBehaviour
     private GameObject m_eggVisual = null;
 
     [SerializeField]
+    private GameObject m_eggShellVisual = null;
+
+
+    [SerializeField]
     private GameObject m_creatureVisual = null;
 
     [SerializeField]
@@ -36,7 +40,7 @@ public class Creature : MonoBehaviour
         yield return m_gameManager.WaitForStart();
         yield return m_environmentController.WaitForStart();
 
-        m_stateMachine.AddState(new EggState(m_eggVisual, m_creatureVisual, m_environmentController));
+        m_stateMachine.AddState(new EggState(m_eggVisual, m_eggShellVisual, m_creatureVisual, m_environmentController));
         m_stateMachine.AddState(new CreatureIdleState());
         m_stateMachine.AddState(new CreatureMoveState(transform, m_moveSpeed, m_environmentController));
 
@@ -71,17 +75,21 @@ public class Creature : MonoBehaviour
     {
         private DateTime m_exitTime = DateTime.MinValue;
         private readonly GameObject m_eggVisual = null;
+        private readonly GameObject m_eggShellVisual = null;
+
         private readonly GameObject m_creatureVisual = null;
         private readonly EnvironmentController m_environmentController = null;
 
-        public EggState(GameObject eggVisual, GameObject creatureVisual, EnvironmentController environmentController)
+        public EggState(GameObject eggVisual, GameObject eggShellVisual, GameObject creatureVisual, EnvironmentController environmentController)
             : base(nameof(EggState))
         {
             m_eggVisual = eggVisual;
+            m_eggShellVisual = eggShellVisual;
             m_creatureVisual = creatureVisual;
             m_environmentController = environmentController;
 
             m_eggVisual.SetActive(true);
+            m_eggShellVisual.SetActive(false);
             m_creatureVisual.SetActive(false);
         }
 
@@ -102,6 +110,8 @@ public class Creature : MonoBehaviour
             {
                 m_eggVisual.SetActive(false);
                 m_creatureVisual.SetActive(true);
+                m_eggShellVisual.SetActive(true);
+                m_eggShellVisual.transform.parent = null;
 
                 ExitToState(nameof(CreatureIdleState));
             }
@@ -110,7 +120,6 @@ public class Creature : MonoBehaviour
 
     private class CreatureIdleState : AbstractState
     {
-
         private DateTime m_exitTime = DateTime.MinValue;
 
         public CreatureIdleState()
