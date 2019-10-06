@@ -20,10 +20,11 @@ public class Creature : MonoBehaviour
 
     [SerializeField]
     private GameObject m_eggShellVisual = null;
-
+    
+    private GameObject m_creatureVisual = null;
 
     [SerializeField]
-    private GameObject m_creatureVisual = null;
+    private GameObject[] m_creatureVisualsArray = null;
 
     [SerializeField]
     private float m_moveSpeed = 1f;
@@ -39,6 +40,8 @@ public class Creature : MonoBehaviour
 
         yield return m_gameManager.WaitForStart();
         yield return m_environmentController.WaitForStart();
+
+        m_creatureVisual = m_creatureVisualsArray != null && m_creatureVisualsArray.Length > 0 ? m_creatureVisualsArray[UnityEngine.Random.Range(0, m_creatureVisualsArray.Length)] : throw new NullReferenceException($"{nameof(m_creatureVisualsArray)} is null or empty!");
 
         m_stateMachine.AddState(new EggState(m_eggVisual, m_eggShellVisual, m_creatureVisual, m_environmentController));
         m_stateMachine.AddState(new CreatureIdleState());
@@ -85,11 +88,11 @@ public class Creature : MonoBehaviour
         {
             m_eggVisual = eggVisual;
             m_eggShellVisual = eggShellVisual;
-            m_creatureVisual = creatureVisual;
+            m_creatureVisual = GameObject.Instantiate(creatureVisual, eggVisual.transform.parent);
             m_environmentController = environmentController;
 
             m_eggVisual.SetActive(true);
-            m_eggShellVisual.SetActive(false);
+            m_eggShellVisual.SetActive(false);            
             m_creatureVisual.SetActive(false);
         }
 
