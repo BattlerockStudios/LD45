@@ -59,7 +59,7 @@ public enum GameEventType
 public class GameManager : MonoBehaviour
 {
 
-    private readonly Plane m_plane = new Plane(Vector3.up, Vector3.zero);
+    private readonly Plane m_plane = new Plane(Vector3.up, new Vector3(0f, 0.6f, 0f));
     private bool m_isStarted = false;
     private CircularList<GameEvent> m_events = new CircularList<GameEvent>(50);
     private readonly Dictionary<string, long> m_eventClientToIndexMap = new Dictionary<string, long>();
