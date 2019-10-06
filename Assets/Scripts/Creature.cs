@@ -46,6 +46,9 @@ public class Creature : MonoBehaviour
     [SerializeField]
     private GameObject m_hungryIcon = null;
 
+    [SerializeField]
+    private GameObject m_sleepyIcon = null;
+
     private EnvironmentController m_environmentController = null;
     private GameManager m_gameManager = null;
 
@@ -165,6 +168,12 @@ public class Creature : MonoBehaviour
 
         protected override void OnUpdate()
         {
+            if (m_blackboardValues.ContainsKey(HUNGRY))
+            {
+                ExitToState(nameof(CreatureHungryState));
+                return;
+            }
+
             // ZAS: If there is a bell, then we want to get moving!
             if (m_blackboardValues.ContainsKey(LAST_BELL))
             {
