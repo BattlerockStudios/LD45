@@ -322,7 +322,7 @@ public class Creature : MonoBehaviour
 
                 m_creatureTransform.position = atEnd;
 
-                await Task.Delay(500);
+                await Task.Yield(); 
             }
 
             if (!ShouldBreakMovement())
