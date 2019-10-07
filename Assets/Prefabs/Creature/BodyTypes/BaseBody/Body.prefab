@@ -97,6 +97,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4175213b6d9dc542b5634a9b4b6c8bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_hueMin: 0.1
+  m_hueMax: 1
+  m_saturationMin: 1
+  m_saturationMax: 1
+  m_valueMin: 0.5
+  m_valueMax: 1
 --- !u!1001 &369393100956971294
 PrefabInstance:
   m_ObjectHideFlags: 0
