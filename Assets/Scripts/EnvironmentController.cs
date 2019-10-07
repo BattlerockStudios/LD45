@@ -107,6 +107,15 @@ public class EnvironmentController : MonoBehaviour
     {
         m_animatingList.Add(trans);
 
+        var tiles = trans.GetComponentsInChildren<Tile>(includeInactive: true);
+        if(tiles != null)
+        {
+            for (int i = 0; i < tiles.Length; i++)
+            {
+                tiles[i].Show();
+            }
+        }
+
         var startPos = trans.position;
         var endPos = startPos + (Vector3.up * NEGATIVE_DISTANCE);
         await AnimationUtility.AnimateOverTime(500, p => trans.position = Vector3.Lerp(startPos, endPos, m_curve.Evaluate(p)));
