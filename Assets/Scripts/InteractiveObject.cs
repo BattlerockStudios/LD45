@@ -1,20 +1,20 @@
 ﻿using System;
 using UnityEngine;
 
+[RequireComponent(typeof(Collider))]
+[RequireComponent(typeof(AudioSource))]
 public class InteractiveObject : MonoBehaviour
 {
     public GameEventType gameEventType = GameEventType.None;
 
     protected Guid m_uniqueID = Guid.NewGuid();
 
+    protected AudioSource _audioSource;
+
     public bool IsBeingInteractedWith
     {
         get { return m_interactionSource != null; }
     }
-
-    public Material SelectedMaterial = null;
-    public Material DeselectedMaterial = null;
-    public Renderer Renderer = null;
 
     protected IInteractionSource m_interactionSource = null;
 
@@ -25,17 +25,12 @@ public class InteractiveObject : MonoBehaviour
     }
 
     public void OnDeselect()
-    {
-        Renderer.material = DeselectedMaterial;
-
+    {  
         Debug.Log($"{name} is deselected!");
     }
 
     public void OnSelect()
-    {
-        DeselectedMaterial = Renderer.material;
-        Renderer.material = SelectedMaterial;
-
+    {     
         Debug.Log($"{name} is selected!");
     }
 
@@ -43,6 +38,11 @@ public class InteractiveObject : MonoBehaviour
     {
         m_interactionSource?.OnInteractionEnd(this);
         m_interactionSource = null;
+    }
+
+    private void Start()
+    {
+        _audioSource = GetComponent<AudioSource>();
     }
 
     private void Update()

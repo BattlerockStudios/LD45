@@ -2,9 +2,7 @@
 
 [RequireComponent(typeof(Collider))]
 public class ClickableItem : InteractiveObject
-{
-   
-
+{  
     public override void BeginInteraction(IInteractionSource interactionSource)
     {
         base.BeginInteraction(interactionSource);
