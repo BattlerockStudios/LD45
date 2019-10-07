@@ -59,8 +59,8 @@ public enum GameEventType
 
 public class GameManager : MonoBehaviour, IInteractionSource
 {
-    // TJS: (SHOULD FIND THE REAL MATH FOR THIS) For making sure the blob stays level with the floor when going towards the bell or other interactives.
-    private const float HEIGHT_OFFSET = 0.6f;
+    // TJS: For making sure the blob stays level with the floor when going towards the bell or other interactives.
+    private const float HEIGHT_OFFSET = 0.0f;
 
     // TJS: Interactive layer that raycasts can hit
     private const int m_layerMask = 1 << 8;
