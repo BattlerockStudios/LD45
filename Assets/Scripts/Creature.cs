@@ -353,13 +353,6 @@ public class Creature : MonoBehaviour
 
         protected override void OnUpdate()
         {
-            // ZAS: If there is a bell, then we want to get moving!
-            if (m_blackboardValues.ContainsKey(LAST_BELL))
-            {
-                ExitToState(nameof(CreatureMoveState));
-                return;
-            }
-
             // ZAS: If our random timer is expired, do something else
             if (DateTime.UtcNow > m_exitTime)
             {
@@ -394,13 +387,6 @@ public class Creature : MonoBehaviour
 
         protected override void OnUpdate()
         {
-            // ZAS: If there is a bell, then we want to get moving!
-            if (m_blackboardValues.ContainsKey(LAST_BELL))
-            {
-                ExitToState(nameof(CreatureMoveState));
-                return;
-            }
-
             // ZAS: If our random timer is expired, do something else
             if (DateTime.UtcNow > m_exitTime)
             {
@@ -438,7 +424,7 @@ public class Creature : MonoBehaviour
             // ZAS: If there is a bell, then we want to get moving!
             if (m_blackboardValues.ContainsKey(LAST_BELL))
             {
-                ExitToState(nameof(CreatureMoveState));
+                ExitToState(nameof(CreatureConfusedState));
                 return;
             }
 
