@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-public class ClickableItem : MonoBehaviour
+[RequireComponent(typeof(Collider))]
+public class ClickableItem : InteractiveObject
 {
-
     [SerializeField]
     private float m_rotateSpeed = 100f;
 
@@ -25,4 +25,10 @@ public class ClickableItem : MonoBehaviour
         m_itemContainer.localPosition = m_containerPositionAtStart + new Vector3(0f, Mathf.Sin(Time.time) * m_oscillateIntensity, 0f);
     }
 
+    public override void BeginInteraction(IInteractionSource interactionSource)
+    {
+        base.BeginInteraction(interactionSource);
+        // TODO: Add Bell SFX, add game event to change the blob state to walk towards the bell
+
+    }
 }
