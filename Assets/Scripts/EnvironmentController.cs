@@ -12,8 +12,24 @@ public class EnvironmentController : MonoBehaviour
     [SerializeField]
     private AnimationCurve m_curve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
 
+    [SerializeField]
+    private Vector2 m_minBoundary = Vector2.zero;
+
+    [SerializeField]
+    private Vector2 m_maxBoundary = Vector2.zero;
+
     private readonly List<Transform> m_animatingList = new List<Transform>();
     private bool m_isStarted = false;
+    private Bounds m_bounds = new Bounds();
+
+    private void OnDrawGizmos()
+    {
+        var center = (m_minBoundary + m_maxBoundary) / 2f;
+
+        Gizmos.DrawSphere(new Vector3(m_minBoundary.x, transform.position.y, m_minBoundary.y), .2f);
+        Gizmos.DrawSphere(new Vector3(m_maxBoundary.x, transform.position.y, m_maxBoundary.y), .2f);
+        Gizmos.DrawWireCube(new Vector3(center.x, transform.position.y, center.y), new Vector3(m_maxBoundary.x - m_minBoundary.x, 0f, m_maxBoundary.y - m_minBoundary.y));
+    }
 
     private void Awake()
     {
@@ -22,6 +38,9 @@ public class EnvironmentController : MonoBehaviour
             var childTransform = transform.GetChild(i);
             childTransform.position = new Vector3(childTransform.position.x, transform.position.y - NEGATIVE_DISTANCE, childTransform.position.z);
         }
+
+        m_bounds.Encapsulate(new Vector3(m_minBoundary.x, transform.position.y, m_minBoundary.y));
+        m_bounds.Encapsulate(new Vector3(m_maxBoundary.x, transform.position.y, m_maxBoundary.y));
 
         m_isStarted = true;
     }
@@ -32,6 +51,11 @@ public class EnvironmentController : MonoBehaviour
         {
             yield return null;
         }
+    }
+
+    public Vector3 GetClosesValidPoint(Vector3 point)
+    {
+        return m_bounds.ClosestPoint(point);
     }
 
     public void RevealPoint(Vector3 point)

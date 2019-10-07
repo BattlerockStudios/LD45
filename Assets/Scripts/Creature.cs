@@ -236,6 +236,8 @@ public class Creature : MonoBehaviour
                 targetPosition = m_creatureTransform.position + (new Vector3(randomInCircle.x, 0f, randomInCircle.y) * m_stats.MovementSpeed);
             }
 
+            targetPosition = m_environmentController.GetClosesValidPoint(targetPosition);
+
             MoveToTargetAsync(targetPosition);
         }
 
@@ -284,6 +286,7 @@ public class Creature : MonoBehaviour
 
                 var atStart = m_creatureTransform.position;
                 var atEnd = atStart + (vectorToTarget.normalized * m_stats.MovementSpeed);
+                m_environmentController.RevealPath(atStart, atEnd);
                 await AnimationUtility.AnimateOverTime(
                     1000,
                     x =>
@@ -294,7 +297,6 @@ public class Creature : MonoBehaviour
                         poss.y += t;
 
                         m_creatureTransform.position = poss;
-                        m_environmentController.RevealPoint(poss);
                     }
                 );
 
