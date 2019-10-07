@@ -59,7 +59,7 @@ public class FruitTree : InteractiveObject
             }
 
             for (int i = 0; i < m_availableFruits.Length; i++)
-            {
+            {                
                 var rigidbody = m_availableFruits[i].GetComponent<Rigidbody>();
                 rigidbody.isKinematic = false;
                 m_availableFruits[i].layer = LayerMask.NameToLayer("Interactable");
