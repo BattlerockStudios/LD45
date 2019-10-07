@@ -59,6 +59,9 @@ public enum GameEventType
 
 public class GameManager : MonoBehaviour, IInteractionSource
 {
+    // TJS: (SHOULD FIND THE REAL MATH FOR THIS) For making sure the blob stays level with the floor when going towards the bell or other interactives.
+    private const float HEIGHT_OFFSET = 0.6f;
+
     // TJS: Interactive layer that raycasts can hit
     private const int m_layerMask = 1 << 8;
     private readonly RaycastHit[] m_raycastHits = new RaycastHit[1];
@@ -132,7 +135,9 @@ public class GameManager : MonoBehaviour, IInteractionSource
             if (Physics.RaycastNonAlloc(ray, m_raycastHits, Mathf.Infinity, m_layerMask) > 0)
             {
                 m_interactiveObject = m_raycastHits[0].collider.GetComponent<InteractiveObject>();
-                RegisterEvent(m_interactiveObject.gameEventType, m_raycastHits[0].point);
+                var raycastHitLocation = m_raycastHits[0].collider.bounds.min;
+                Vector3 position = new Vector3(raycastHitLocation.x, HEIGHT_OFFSET, raycastHitLocation.z);
+                RegisterEvent(m_interactiveObject.gameEventType, position);
             }
 
             m_interactiveObject?.BeginInteraction(this);
