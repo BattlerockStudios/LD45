@@ -22,32 +22,16 @@ public class Creature : MonoBehaviour
     [SerializeField]
     private GameObject m_eggShellVisual = null;
 
-    [SerializeField]
-    private GameObject m_emoteVisual = null;
-
     private GameObject m_creatureVisual = null;
 
     [SerializeField]
     private GameObject[] m_creatureVisualsArray = null;
 
     [SerializeField]
-    private float m_moveSpeed = 1f;
+    private EmoteIcons m_emoteIcons = new EmoteIcons();
 
     [SerializeField]
-    [Range(0, 100)]
-    private int m_hungerMeter = 0;
-
-    [SerializeField]
-    private GameObject m_exclamationIcon = null;
-
-    [SerializeField]
-    private GameObject m_questionMarkIcon = null;
-
-    [SerializeField]
-    private GameObject m_hungryIcon = null;
-
-    [SerializeField]
-    private GameObject m_sleepyIcon = null;
+    private Stats m_stats = new Stats();
 
     private EnvironmentController m_environmentController = null;
     private GameManager m_gameManager = null;
@@ -63,9 +47,16 @@ public class Creature : MonoBehaviour
 
         m_creatureVisual = m_creatureVisualsArray != null && m_creatureVisualsArray.Length > 0 ? m_creatureVisualsArray[UnityEngine.Random.Range(0, m_creatureVisualsArray.Length)] : throw new NullReferenceException($"{nameof(m_creatureVisualsArray)} is null or empty!");
 
-        m_stateMachine.AddState(new EggState(m_eggVisual, m_eggShellVisual, m_creatureVisual, m_emoteVisual, m_environmentController));
-        m_stateMachine.AddState(new CreatureIdleState());
-        m_stateMachine.AddState(new CreatureMoveState(transform, m_moveSpeed, m_environmentController));
+        m_emoteIcons.FillEmoteIconArray();
+        InitializeStateMachine();
+    }
+
+    private void InitializeStateMachine()
+    {
+        m_stateMachine.AddState(new EggState(m_eggVisual, m_eggShellVisual, m_creatureVisual, m_emoteIcons.EmoteVisual, m_environmentController));
+        m_stateMachine.AddState(new CreatureIdleState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.DotEmoteIcon)));
+        m_stateMachine.AddState(new CreatureMoveState(transform, m_stats, m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.DotEmoteIcon), m_environmentController));
+        m_stateMachine.AddState(new CreatureHungryState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.HungryIcon)));
 
         m_stateMachine.Start(nameof(EggState));
     }
@@ -118,7 +109,7 @@ public class Creature : MonoBehaviour
 
             m_eggVisual.SetActive(true);
             m_emoteVisual.SetActive(false);
-            m_eggShellVisual.SetActive(false);            
+            m_eggShellVisual.SetActive(false);
             m_creatureVisual.SetActive(false);
         }
 
@@ -140,6 +131,8 @@ public class Creature : MonoBehaviour
                 m_eggVisual.SetActive(false);
                 m_creatureVisual.SetActive(true);
                 m_eggShellVisual.SetActive(true);
+                m_emoteVisual.SetActive(true);
+
                 m_eggShellVisual.transform.parent = null;
 
                 ExitToState(nameof(CreatureIdleState));
@@ -150,14 +143,17 @@ public class Creature : MonoBehaviour
     private class CreatureIdleState : AbstractState
     {
         private DateTime m_exitTime = DateTime.MinValue;
+        private readonly GameObject m_emoteIcon = null;
 
-        public CreatureIdleState()
+        public CreatureIdleState(GameObject emoteIcon)
             : base(nameof(CreatureIdleState))
         {
+            m_emoteIcon = emoteIcon;
         }
 
         protected override void OnEnter()
         {
+            m_emoteIcon.SetActive(true);
             m_exitTime = DateTime.UtcNow.AddSeconds(UnityEngine.Random.Range(1, 2));
         }
 
@@ -194,19 +190,25 @@ public class Creature : MonoBehaviour
     private class CreatureMoveState : AbstractState
     {
         private readonly Transform m_creatureTransform = null;
-        private readonly float m_moveSpeed = 0f;
+        private readonly GameObject m_emoteIcon = null;
+        private readonly Stats m_stats;
+        private int m_hungerLevel = 0;
         private readonly EnvironmentController m_environmentController = null;
 
-        public CreatureMoveState(Transform transform, float moveSpeed, EnvironmentController environmentController)
+        public CreatureMoveState(Transform transform, Stats stats, GameObject emoteIcon, EnvironmentController environmentController)
           : base(nameof(CreatureMoveState))
         {
             m_creatureTransform = transform;
-            m_moveSpeed = moveSpeed;
+            m_emoteIcon = emoteIcon;
+            m_stats = stats;
+            m_hungerLevel = m_stats.HungerLevel;
             m_environmentController = environmentController;
         }
 
         protected override void OnEnter()
         {
+            m_emoteIcon.SetActive(true);
+
             var targetPosition = Vector3.zero;
             if (m_blackboardValues.ContainsKey(LAST_BELL))
             {
@@ -218,7 +220,7 @@ public class Creature : MonoBehaviour
             else
             {
                 var randomInCircle = UnityEngine.Random.insideUnitCircle;
-                targetPosition = m_creatureTransform.position + (new Vector3(randomInCircle.x, 0f, randomInCircle.y) * m_moveSpeed);
+                targetPosition = m_creatureTransform.position + (new Vector3(randomInCircle.x, 0f, randomInCircle.y) * m_stats.MovementSpeed);
             }
 
             MoveToTargetAsync(targetPosition);
@@ -226,6 +228,7 @@ public class Creature : MonoBehaviour
 
         protected override void OnExit()
         {
+            m_stats.SetHungerLevel(m_hungerLevel++);
         }
 
         protected override void OnUpdate()
@@ -257,7 +260,7 @@ public class Creature : MonoBehaviour
             var start = m_creatureTransform.position;
             var vectorToTarget = (target - m_creatureTransform.position);
             var maxMagnitude = vectorToTarget.magnitude;
-            var segments = Mathf.FloorToInt(maxMagnitude / m_moveSpeed);
+            var segments = Mathf.FloorToInt(maxMagnitude / m_stats.MovementSpeed);
             for (int i = 0; i < segments; i++)
             {
                 if (ShouldBreakMovement())
@@ -266,7 +269,7 @@ public class Creature : MonoBehaviour
                 }
 
                 var atStart = m_creatureTransform.position;
-                var atEnd = atStart + (vectorToTarget.normalized * m_moveSpeed);
+                var atEnd = atStart + (vectorToTarget.normalized * m_stats.MovementSpeed);
                 await AnimationUtility.AnimateOverTime(
                     1000,
                     x =>
@@ -323,11 +326,13 @@ public class Creature : MonoBehaviour
 
         protected override void OnEnter()
         {
+            m_hungerIcon.SetActive(true);
             m_exitTime = DateTime.UtcNow.AddSeconds(UnityEngine.Random.Range(1, 2));
         }
 
         protected override void OnExit()
         {
+            m_hungerIcon.SetActive(false);
             m_exitTime = DateTime.MinValue;
         }
 
@@ -348,5 +353,112 @@ public class Creature : MonoBehaviour
             }
         }
 
+    }
+}
+
+[Serializable]
+public class Stats
+{
+    #region Private Variables
+
+    [Range(0, 100)]
+    [SerializeField]
+    private int m_hungerLevel = 0;
+
+    [Range(0, 100)]
+    [SerializeField]
+    private int m_sleepinessLevel = 0;
+       
+    [SerializeField]
+    private float m_movementSpeed = 3;
+
+    #endregion
+    
+    #region Public Properties
+
+    public int HungerLevel
+    {
+        get { return m_hungerLevel; }
+    }
+
+    public int SleepinessLevel
+    {
+        get { return m_sleepinessLevel; }
+    }
+
+    public float MovementSpeed
+    {
+        get { return m_movementSpeed; }
+    }
+
+    #endregion
+
+    #region Public Methods
+
+    public void SetHungerLevel(int value)
+    {
+        m_hungerLevel = value;
+    }
+
+    #endregion
+}
+
+[Serializable]
+public class EmoteIcons
+{
+    // TJS: This is populated by adding the transform children of the m_emoteVisual object
+    private GameObject[] m_emoteIconsArray = null;
+
+    [SerializeField]
+    private GameObject m_dotEmoteIcon = null;
+
+    [SerializeField]
+    private GameObject m_exclamationIcon = null;
+
+    [SerializeField]
+    private GameObject m_questionMarkIcon = null;
+
+    [SerializeField]
+    private GameObject m_hungryIcon = null;
+
+    [SerializeField]
+    private GameObject m_sleepyIcon = null;
+
+    [SerializeField]
+    private GameObject m_emoteVisual = null;
+
+    public GameObject DotEmoteIcon { get => m_dotEmoteIcon; }
+    public GameObject ExclamationIcon { get => m_exclamationIcon; }
+    public GameObject QuestionMarkIcon { get => m_questionMarkIcon; }
+    public GameObject HungryIcon { get => m_hungryIcon; }
+    public GameObject SleepyIcon { get => m_sleepyIcon; }
+    public GameObject EmoteVisual { get => m_emoteVisual; }
+
+    public void FillEmoteIconArray()
+    {
+        int iconCount = m_emoteVisual.transform.childCount;
+
+        m_emoteIconsArray = new GameObject[iconCount];
+
+        for (int i = 0; i < iconCount; i++)
+        {
+            var childTransform = EmoteVisual.transform.GetChild(i);
+            m_emoteIconsArray[i] = childTransform.gameObject;
+        }
+    }
+
+    private void DisableAllEmoteIcons()
+    {
+        for (int i = 0; i < m_emoteIconsArray.Length; i++)
+        {
+            m_emoteIconsArray[i].SetActive(false);
+        }
+    }
+
+    // TJS: Probably could have done all this differently... but running out of time!!
+    public GameObject GetSpecificEmoteIconAfterDisablingAllEmoteIcons(GameObject emoteIcon)
+    {
+        DisableAllEmoteIcons();
+        return emoteIcon;
     }
 }
