@@ -228,6 +228,7 @@ MonoBehaviour:
     m_hungerLevel: 0
     m_sleepinessLevel: 0
     m_movementSpeed: 3
+  m_eggHatchSFX: {fileID: 8300000, guid: 4222bca5c58e4944fae174018b5a8f83, type: 3}
   m_audioClips:
   - {fileID: 8300000, guid: 31313a9571a2f9e4f9df242c76cad448, type: 3}
   - {fileID: 8300000, guid: 82df03ef7d75735488c9bb124e123f4c, type: 3}

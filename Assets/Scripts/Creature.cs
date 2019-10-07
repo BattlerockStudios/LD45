@@ -43,6 +43,9 @@ public class Creature : MonoBehaviour
     private AudioSource m_audioSource = null;
 
     [SerializeField]
+    private AudioClip m_eggHatchSFX = null;
+
+    [SerializeField]
     private AudioClip[] m_audioClips = null;
 
     private IEnumerator Start()
@@ -64,7 +67,7 @@ public class Creature : MonoBehaviour
 
     private void InitializeStateMachine()
     {
-        m_stateMachine.AddState(new EggState(m_eggVisual, m_eggShellVisual, m_creatureVisual, m_emoteIcons.EmoteVisual, m_environmentController));
+        m_stateMachine.AddState(new EggState(m_eggVisual, m_eggShellVisual, m_creatureVisual, m_emoteIcons.EmoteVisual, m_environmentController, this));
         m_stateMachine.AddState(new CreatureIdleState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.DotEmoteIcon)));
         m_stateMachine.AddState(new CreatureMoveState(transform, this, m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.DotEmoteIcon), m_environmentController));
         m_stateMachine.AddState(new CreatureHungryState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.HungryIcon)));
@@ -113,14 +116,18 @@ public class Creature : MonoBehaviour
         private readonly GameObject m_emoteVisual = null;
         private readonly EnvironmentController m_environmentController = null;
 
-        public EggState(GameObject eggVisual, GameObject eggShellVisual, GameObject creatureVisual, GameObject emoteVisual, EnvironmentController environmentController)
+        private readonly Creature m_creature = null;
+
+        public EggState(GameObject eggVisual, GameObject eggShellVisual, GameObject creatureVisual, GameObject emoteVisual, EnvironmentController environmentController, Creature creature)
             : base(nameof(EggState))
         {
             m_eggVisual = eggVisual;
             m_eggShellVisual = eggShellVisual;
             m_emoteVisual = emoteVisual;
-            m_creatureVisual = GameObject.Instantiate(creatureVisual, eggVisual.transform.parent);
+            m_creatureVisual = creatureVisual;
             m_environmentController = environmentController;
+
+            m_creature = creature;
 
             m_eggVisual.SetActive(true);
             m_emoteVisual.SetActive(false);
@@ -143,12 +150,16 @@ public class Creature : MonoBehaviour
         {
             if (DateTime.UtcNow > m_exitTime)
             {
+                var body = GameObject.Instantiate(m_creatureVisual, m_eggVisual.transform.parent);
+
                 m_eggVisual.SetActive(false);
-                m_creatureVisual.SetActive(true);
+                body.SetActive(true);
                 m_eggShellVisual.SetActive(true);
                 m_emoteVisual.SetActive(true);
 
                 m_eggShellVisual.transform.parent = null;
+
+                m_creature.m_audioSource.PlayOneShot(m_creature.m_eggHatchSFX);
 
                 ExitToState(nameof(CreatureIdleState));
             }
