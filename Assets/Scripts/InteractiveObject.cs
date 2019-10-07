@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class InteractiveObject : MonoBehaviour
 {
+    public GameEventType gameEventType = GameEventType.None;
+
     protected Guid m_uniqueID = Guid.NewGuid();
 
     public bool IsBeingInteractedWith

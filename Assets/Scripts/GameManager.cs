@@ -52,6 +52,7 @@ public struct GameEvent
 
 public enum GameEventType
 {
+    None,
     Bell,
     Food
 }
@@ -131,11 +132,13 @@ public class GameManager : MonoBehaviour, IInteractionSource
             if (Physics.RaycastNonAlloc(ray, m_raycastHits, Mathf.Infinity, m_layerMask) > 0)
             {
                 m_interactiveObject = m_raycastHits[0].collider.GetComponent<InteractiveObject>();
+                RegisterEvent(m_interactiveObject.gameEventType, m_raycastHits[0].point);
             }
 
             m_interactiveObject?.BeginInteraction(this);
         }
 
+#if UNITY_IOS || UNITY_ANDROID
         if (Input.touchCount > 0)
         {
             var touch = Input.GetTouch(0);
@@ -148,10 +151,12 @@ public class GameManager : MonoBehaviour, IInteractionSource
                 var intersect = ray.GetPoint(enter);
                 Debug.DrawLine(ray.origin, intersect, Color.green, 15f);
 
-                m_interactiveObject?.BeginInteraction(this);                
+                m_interactiveObject?.BeginInteraction(this);
             }
         }
+#endif
     }
+
 
     #region Interface Methods
 
