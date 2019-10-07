@@ -361,11 +361,14 @@ public class Stats
 {
     #region Private Variables
 
-    [Range(0, 100)]
+    private const int MAX_HUNGER_LEVEL = 100;
+    private const int MAX_SLEEPINESS_LEVEL = 100;
+
+    [Range(0, MAX_HUNGER_LEVEL)]
     [SerializeField]
     private int m_hungerLevel = 0;
 
-    [Range(0, 100)]
+    [Range(0, MAX_SLEEPINESS_LEVEL)]
     [SerializeField]
     private int m_sleepinessLevel = 0;
        
@@ -397,7 +400,22 @@ public class Stats
 
     public void SetHungerLevel(int value)
     {
+        if (m_hungerLevel >= MAX_HUNGER_LEVEL)
+        {
+            m_hungerLevel = MAX_HUNGER_LEVEL;
+        }
+
         m_hungerLevel = value;
+    }
+
+    public void SetSleepinessLevel(int value)
+    {
+        if (m_sleepinessLevel >= MAX_SLEEPINESS_LEVEL)
+        {
+            m_sleepinessLevel = MAX_SLEEPINESS_LEVEL;
+        }
+
+        m_sleepinessLevel = value;
     }
 
     #endregion
@@ -442,7 +460,7 @@ public class EmoteIcons
 
         for (int i = 0; i < iconCount; i++)
         {
-            var childTransform = EmoteVisual.transform.GetChild(i);
+            var childTransform = m_emoteVisual.transform.GetChild(i);
             m_emoteIconsArray[i] = childTransform.gameObject;
         }
     }
