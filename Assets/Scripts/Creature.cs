@@ -76,6 +76,8 @@ public class Creature : MonoBehaviour
     {
         switch (gameEvent.EventType)
         {
+            case GameEventType.None:
+                break;
             case GameEventType.Bell:
                 m_stateMachine.SetBlackboardValue(LAST_BELL, gameEvent.Position);
                 break;

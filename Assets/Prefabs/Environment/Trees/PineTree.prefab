@@ -1,5 +1,18 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!65 &2426748744529922029
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1479773323241362901}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 3.2, y: 3.6000001, z: 3.2}
+  m_Center: {x: 0, y: 0.9353, z: 0}
 --- !u!1001 &2274230678805310286
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11,6 +24,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: PineTree
+      objectReference: {fileID: 0}
+    - target: {fileID: 8094823173879153721, guid: 8f76b143f61513b4ca2baf18f4856fb7,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 6154681724599717484, guid: 8f76b143f61513b4ca2baf18f4856fb7,
         type: 3}
@@ -67,6 +85,16 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8120863600067129189, guid: 8f76b143f61513b4ca2baf18f4856fb7,
+        type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2359693535719869176, guid: 8f76b143f61513b4ca2baf18f4856fb7,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8f76b143f61513b4ca2baf18f4856fb7, type: 3}
 --- !u!4 &5397109692967593250 stripped
@@ -86,6 +114,16 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: pineleaves
+      objectReference: {fileID: 0}
+    - target: {fileID: -927199367670048503, guid: fe8df193d2a4a9f44828f97e7277c007,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2534866581884222612, guid: fe8df193d2a4a9f44828f97e7277c007,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: -4216859302048453862, guid: fe8df193d2a4a9f44828f97e7277c007,
         type: 3}
@@ -144,3 +182,9 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fe8df193d2a4a9f44828f97e7277c007, type: 3}
+--- !u!1 &1479773323241362901 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -927199367670048503, guid: fe8df193d2a4a9f44828f97e7277c007,
+    type: 3}
+  m_PrefabInstance: {fileID: 7469458477801917660}
+  m_PrefabAsset: {fileID: 0}
