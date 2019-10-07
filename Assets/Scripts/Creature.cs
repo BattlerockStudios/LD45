@@ -193,6 +193,7 @@ public class Creature : MonoBehaviour
         private readonly GameObject m_emoteIcon = null;
         private readonly Stats m_stats;
         private int m_hungerLevel = 0;
+        private int m_sleepinessLevel = 0;
         private readonly EnvironmentController m_environmentController = null;
 
         public CreatureMoveState(Transform transform, Stats stats, GameObject emoteIcon, EnvironmentController environmentController)
@@ -202,6 +203,7 @@ public class Creature : MonoBehaviour
             m_emoteIcon = emoteIcon;
             m_stats = stats;
             m_hungerLevel = m_stats.HungerLevel;
+            m_sleepinessLevel = m_stats.SleepinessLevel;
             m_environmentController = environmentController;
         }
 
@@ -214,8 +216,15 @@ public class Creature : MonoBehaviour
             {
                 targetPosition = (Vector3)m_blackboardValues[LAST_BELL];
 
-                // ZAS: We are consuming this bell event
+                // ZAS: We are consuming this event
                 m_blackboardValues.Remove(LAST_BELL);
+            }
+            else if (m_blackboardValues.ContainsKey(HUNGRY))
+            {
+                targetPosition = (Vector3)m_blackboardValues[HUNGRY];
+
+                // ZAS: We are consuming this event
+                m_blackboardValues.Remove(HUNGRY);
             }
             else
             {
@@ -229,6 +238,7 @@ public class Creature : MonoBehaviour
         protected override void OnExit()
         {
             m_stats.SetHungerLevel(m_hungerLevel++);
+            m_stats.SetSleepinessLevel(m_sleepinessLevel++);
         }
 
         protected override void OnUpdate()
