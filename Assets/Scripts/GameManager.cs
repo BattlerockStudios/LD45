@@ -142,6 +142,12 @@ public class GameManager : MonoBehaviour, IInteractionSource
 
             m_interactiveObject?.BeginInteraction(this);
         }
+        else if (InputUtility.DidTouchEnd())
+        {
+            m_interactiveObject?.ReleaseInteraction();
+        }
+        
+
     }
 
 

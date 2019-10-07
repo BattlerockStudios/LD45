@@ -69,4 +69,21 @@ public static class InputUtility
         }
     }
 
+    public static bool DidTouchEnd()
+    {
+        if (s_useMobileControls)
+        {
+            if (Input.touchCount == 0)
+            {
+                return false;
+            }
+
+            return Input.GetTouch(0).phase == TouchPhase.Ended;
+        }
+        else
+        {
+            return Input.GetMouseButtonUp(0);
+        }
+    }
+
 }
