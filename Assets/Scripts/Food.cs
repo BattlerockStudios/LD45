@@ -11,7 +11,7 @@ public class Food : InteractiveObject
     {
         base.BeginInteraction(interactionSource);
         // TODO: Add  SFX, add game event to change the blob state to walk towards the bell
-        _audioSource.Play();
+        _audioSource.PlayOneShot(_audioSource.clip);
     }
 
     private void OnCollisionEnter(Collision collision)

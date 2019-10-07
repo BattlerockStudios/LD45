@@ -7,6 +7,7 @@ using UnityEngine;
 /// Controls the behaviour of our little creatures. Creature is driven by a state machine. To add behaviour to it, 
 /// simply make a new state that inherits from AbstractState, and add it in <see cref="Start"/>
 /// </summary>
+[RequireComponent(typeof(AudioSource))]
 public class Creature : MonoBehaviour
 {
     private const string LAST_BELL = "lastBell";
@@ -39,6 +40,11 @@ public class Creature : MonoBehaviour
 
     public Stats Stats { get => m_stats; }
 
+    private AudioSource m_audioSource = null;
+
+    [SerializeField]
+    private AudioClip[] m_audioClips = null;
+
     private IEnumerator Start()
     {
         // ZAS: Yes, this is bad habit... but will work for now
@@ -47,6 +53,8 @@ public class Creature : MonoBehaviour
 
         yield return m_gameManager.WaitForStart();
         yield return m_environmentController.WaitForStart();
+
+        m_audioSource = GetComponent<AudioSource>();
 
         m_creatureVisual = m_creatureVisualsArray != null && m_creatureVisualsArray.Length > 0 ? m_creatureVisualsArray[UnityEngine.Random.Range(0, m_creatureVisualsArray.Length)] : throw new NullReferenceException($"{nameof(m_creatureVisualsArray)} is null or empty!");
 
@@ -212,6 +220,7 @@ public class Creature : MonoBehaviour
 
         protected override void OnEnter()
         {
+            m_creature.m_audioSource.PlayOneShot(m_creature.m_audioClips[0]);
             m_emoteIcon.SetActive(true);
 
             var targetPosition = Vector3.zero;
@@ -242,6 +251,7 @@ public class Creature : MonoBehaviour
 
         protected override void OnExit()
         {
+            m_creature.m_audioSource.PlayOneShot(m_creature.m_audioClips[1]);
             m_creature.Stats.SetHungerLevel(m_creature.Stats.HungerLevel + 1);
             m_creature.Stats.SetSleepinessLevel(m_creature.Stats.SleepinessLevel + 1);
         }

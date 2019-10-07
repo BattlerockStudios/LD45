@@ -6,6 +6,6 @@ public class ClickableItem : InteractiveObject
     {
         base.BeginInteraction(interactionSource);
 
-        _audioSource.Play();
+        _audioSource.PlayOneShot(_audioSource.clip);
     }
 }
