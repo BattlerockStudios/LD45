@@ -9,9 +9,10 @@ using UnityEngine;
 /// </summary>
 public class Creature : MonoBehaviour
 {
-
     private const string LAST_BELL = "lastBell";
+    private const string FOOD = "food";
     private const string HUNGRY = "hungry";
+    private const string SLEEPY = "sleepy";
 
     private readonly StateMachine m_stateMachine = new StateMachine();
     private readonly Guid m_id = Guid.NewGuid();
@@ -36,6 +37,8 @@ public class Creature : MonoBehaviour
     private EnvironmentController m_environmentController = null;
     private GameManager m_gameManager = null;
 
+    public Stats Stats { get => m_stats; }
+
     private IEnumerator Start()
     {
         // ZAS: Yes, this is bad habit... but will work for now
@@ -55,7 +58,7 @@ public class Creature : MonoBehaviour
     {
         m_stateMachine.AddState(new EggState(m_eggVisual, m_eggShellVisual, m_creatureVisual, m_emoteIcons.EmoteVisual, m_environmentController));
         m_stateMachine.AddState(new CreatureIdleState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.DotEmoteIcon)));
-        m_stateMachine.AddState(new CreatureMoveState(transform, m_stats, m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.DotEmoteIcon), m_environmentController));
+        m_stateMachine.AddState(new CreatureMoveState(transform, this, m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.DotEmoteIcon), m_environmentController));
         m_stateMachine.AddState(new CreatureHungryState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.HungryIcon)));
         m_stateMachine.AddState(new CreatureConfusedState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.QuestionMarkIcon)));
         m_stateMachine.AddState(new CreatureExcitedState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.ExclamationIcon)));
@@ -71,7 +74,7 @@ public class Creature : MonoBehaviour
         for (int i = 0; i < newEvents.Length; i++)
         {
             HandleEvent(newEvents[i]);
-        }        
+        }
     }
 
     private void HandleEvent(GameEvent gameEvent)
@@ -84,7 +87,7 @@ public class Creature : MonoBehaviour
                 m_stateMachine.SetBlackboardValue(LAST_BELL, gameEvent.Position);
                 break;
             case GameEventType.Food:
-                m_stateMachine.SetBlackboardValue(HUNGRY, gameEvent.Position);
+                m_stateMachine.SetBlackboardValue(FOOD, gameEvent.Position);
                 break;
             default:
                 Debug.LogError($"Unhandled event {gameEvent.EventType}");
@@ -168,7 +171,7 @@ public class Creature : MonoBehaviour
 
         protected override void OnUpdate()
         {
-            if (m_blackboardValues.ContainsKey(HUNGRY))
+            if (m_blackboardValues.ContainsKey(FOOD))
             {
                 ExitToState(nameof(CreatureConfusedState));
                 return;
@@ -177,7 +180,7 @@ public class Creature : MonoBehaviour
             // ZAS: If there is a bell, then we want to get moving!
             if (m_blackboardValues.ContainsKey(LAST_BELL))
             {
-                ExitToState(nameof(CreatureMoveState));
+                ExitToState(nameof(CreatureConfusedState));
                 return;
             }
 
@@ -195,19 +198,15 @@ public class Creature : MonoBehaviour
     {
         private readonly Transform m_creatureTransform = null;
         private readonly GameObject m_emoteIcon = null;
-        private readonly Stats m_stats;
-        private int m_hungerLevel = 0;
-        private int m_sleepinessLevel = 0;
+        private readonly Creature m_creature = null;
         private readonly EnvironmentController m_environmentController = null;
 
-        public CreatureMoveState(Transform transform, Stats stats, GameObject emoteIcon, EnvironmentController environmentController)
+        public CreatureMoveState(Transform transform, Creature creature, GameObject emoteIcon, EnvironmentController environmentController)
           : base(nameof(CreatureMoveState))
         {
             m_creatureTransform = transform;
+            m_creature = creature;
             m_emoteIcon = emoteIcon;
-            m_stats = stats;
-            m_hungerLevel = m_stats.HungerLevel;
-            m_sleepinessLevel = m_stats.SleepinessLevel;
             m_environmentController = environmentController;
         }
 
@@ -223,17 +222,17 @@ public class Creature : MonoBehaviour
                 // ZAS: We are consuming this event
                 m_blackboardValues.Remove(LAST_BELL);
             }
-            else if (m_blackboardValues.ContainsKey(HUNGRY))
+            else if (m_blackboardValues.ContainsKey(FOOD))
             {
-                targetPosition = (Vector3)m_blackboardValues[HUNGRY];
+                targetPosition = (Vector3)m_blackboardValues[FOOD];
 
                 // ZAS: We are consuming this event
-                m_blackboardValues.Remove(HUNGRY);
+                m_blackboardValues.Remove(FOOD);
             }
             else
             {
                 var randomInCircle = UnityEngine.Random.insideUnitCircle;
-                targetPosition = m_creatureTransform.position + (new Vector3(randomInCircle.x, 0f, randomInCircle.y) * m_stats.MovementSpeed);
+                targetPosition = m_creatureTransform.position + (new Vector3(randomInCircle.x, 0f, randomInCircle.y) * m_creature.Stats.MovementSpeed);
             }
 
             targetPosition = m_environmentController.GetClosesValidPoint(targetPosition);
@@ -243,8 +242,8 @@ public class Creature : MonoBehaviour
 
         protected override void OnExit()
         {
-            m_stats.SetHungerLevel(m_hungerLevel++);
-            m_stats.SetSleepinessLevel(m_sleepinessLevel++);
+            m_creature.Stats.SetHungerLevel(m_creature.Stats.HungerLevel + 1);
+            m_creature.Stats.SetSleepinessLevel(m_creature.Stats.SleepinessLevel + 1);
         }
 
         protected override void OnUpdate()
@@ -276,7 +275,7 @@ public class Creature : MonoBehaviour
             var start = m_creatureTransform.position;
             var vectorToTarget = (target - m_creatureTransform.position);
             var maxMagnitude = vectorToTarget.magnitude;
-            var segments = Mathf.FloorToInt(maxMagnitude / m_stats.MovementSpeed);
+            var segments = Mathf.FloorToInt(maxMagnitude / m_creature.Stats.MovementSpeed);
             for (int i = 0; i < segments; i++)
             {
                 if (ShouldBreakMovement())
@@ -285,7 +284,7 @@ public class Creature : MonoBehaviour
                 }
 
                 var atStart = m_creatureTransform.position;
-                var atEnd = atStart + (vectorToTarget.normalized * m_stats.MovementSpeed);
+                var atEnd = atStart + (vectorToTarget.normalized * m_creature.Stats.MovementSpeed);
                 m_environmentController.RevealPath(atStart, atEnd);
                 await AnimationUtility.AnimateOverTime(
                     1000,
@@ -468,12 +467,12 @@ public class Stats
     [Range(0, MAX_SLEEPINESS_LEVEL)]
     [SerializeField]
     private int m_sleepinessLevel = 0;
-       
+
     [SerializeField]
     private float m_movementSpeed = 3;
 
     #endregion
-    
+
     #region Public Properties
 
     public int HungerLevel
@@ -500,6 +499,11 @@ public class Stats
         if (m_hungerLevel >= MAX_HUNGER_LEVEL)
         {
             m_hungerLevel = MAX_HUNGER_LEVEL;
+        }
+
+        if (m_hungerLevel <= 0)
+        {
+            m_hungerLevel = 0;
         }
 
         m_hungerLevel = value;
