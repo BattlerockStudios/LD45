@@ -134,10 +134,15 @@ public class GameManager : MonoBehaviour, IInteractionSource
 
             if (Physics.RaycastNonAlloc(ray, m_raycastHits, Mathf.Infinity, m_layerMask) > 0)
             {
-                m_interactiveObject = m_raycastHits[0].collider.GetComponent<InteractiveObject>();
                 var raycastHitLocation = m_raycastHits[0].collider.bounds.min;
-                Vector3 position = new Vector3(raycastHitLocation.x, HEIGHT_OFFSET, raycastHitLocation.z);
-                RegisterEvent(m_interactiveObject.gameEventType, position);
+
+                m_interactiveObject = m_raycastHits[0].collider.GetComponent<InteractiveObject>();
+
+                if (m_interactiveObject != null)
+                {
+                    Vector3 position = new Vector3(raycastHitLocation.x, HEIGHT_OFFSET, raycastHitLocation.z);
+                    RegisterEvent(m_interactiveObject.gameEventType, position);
+                }
             }
 
             m_interactiveObject?.BeginInteraction(this);
