@@ -20,17 +20,7 @@ public class FruitTree : InteractiveObject
 
     public bool AreFruitsAvailable
     {
-        get
-        {
-            var areFruitsAvailable = m_availableFruits != null && m_availableFruits.Length > 0;
-
-            if (areFruitsAvailable == false)
-            {
-                Debug.LogWarning("WARNING! NO FRUITS ARE AVAILABLE!");
-            }
-
-            return areFruitsAvailable;
-        }
+        get { return m_availableFruits != null && m_availableFruits.Length > 0; }
     }
 
     private void Initialize()
@@ -44,11 +34,6 @@ public class FruitTree : InteractiveObject
     private void Update()
     {
         m_stateMachine.Update();
-
-        if (m_availableFruits == null)
-        {
-            m_availableFruits = m_respawnFruitState.newlyAvailableFruits;
-        }
     }
 
     public override void BeginInteraction(IInteractionSource interactionSource)
@@ -60,7 +45,12 @@ public class FruitTree : InteractiveObject
     }
 
     private void ShakeTree()
-    {   
+    {
+        if (AreFruitsAvailable == false)
+        {
+            m_availableFruits = m_respawnFruitState.newlyAvailableFruits;
+        }
+
         if (AreFruitsAvailable == true)
         {
             if (m_alreadyInitialized == false)

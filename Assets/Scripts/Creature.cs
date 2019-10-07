@@ -57,6 +57,8 @@ public class Creature : MonoBehaviour
         m_stateMachine.AddState(new CreatureIdleState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.DotEmoteIcon)));
         m_stateMachine.AddState(new CreatureMoveState(transform, m_stats, m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.DotEmoteIcon), m_environmentController));
         m_stateMachine.AddState(new CreatureHungryState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.HungryIcon)));
+        m_stateMachine.AddState(new CreatureConfusedState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.QuestionMarkIcon)));
+        m_stateMachine.AddState(new CreatureExcitedState(m_emoteIcons.GetSpecificEmoteIconAfterDisablingAllEmoteIcons(m_emoteIcons.ExclamationIcon)));
 
         m_stateMachine.Start(nameof(EggState));
     }
@@ -69,7 +71,7 @@ public class Creature : MonoBehaviour
         for (int i = 0; i < newEvents.Length; i++)
         {
             HandleEvent(newEvents[i]);
-        }
+        }        
     }
 
     private void HandleEvent(GameEvent gameEvent)
@@ -168,7 +170,7 @@ public class Creature : MonoBehaviour
         {
             if (m_blackboardValues.ContainsKey(HUNGRY))
             {
-                ExitToState(nameof(CreatureHungryState));
+                ExitToState(nameof(CreatureConfusedState));
                 return;
             }
 
@@ -327,26 +329,67 @@ public class Creature : MonoBehaviour
 
     }
 
-    private class CreatureHungryState : AbstractState
+    private class CreatureConfusedState : AbstractState
     {
-        private readonly GameObject m_hungerIcon = null;
+        private readonly GameObject m_icon = null;
         private DateTime m_exitTime = DateTime.MinValue;
 
-        public CreatureHungryState(GameObject hungerIcon)
-            : base(nameof(CreatureHungryState))
+        public CreatureConfusedState(GameObject icon)
+            : base(nameof(CreatureConfusedState))
         {
-            m_hungerIcon = hungerIcon;
+            m_icon = icon;
         }
 
         protected override void OnEnter()
         {
-            m_hungerIcon.SetActive(true);
-            m_exitTime = DateTime.UtcNow.AddSeconds(UnityEngine.Random.Range(1, 2));
+            m_icon.SetActive(true);
+            m_exitTime = DateTime.UtcNow.AddSeconds(UnityEngine.Random.Range(2, 3));
         }
 
         protected override void OnExit()
         {
-            m_hungerIcon.SetActive(false);
+            m_icon.SetActive(false);
+            m_exitTime = DateTime.MinValue;
+        }
+
+        protected override void OnUpdate()
+        {
+            // ZAS: If there is a bell, then we want to get moving!
+            if (m_blackboardValues.ContainsKey(LAST_BELL))
+            {
+                ExitToState(nameof(CreatureMoveState));
+                return;
+            }
+
+            // ZAS: If our random timer is expired, do something else
+            if (DateTime.UtcNow > m_exitTime)
+            {
+                ExitToState(nameof(CreatureExcitedState));
+                return;
+            }
+        }
+    }
+
+    private class CreatureExcitedState : AbstractState
+    {
+        private readonly GameObject m_icon = null;
+        private DateTime m_exitTime = DateTime.MinValue;
+
+        public CreatureExcitedState(GameObject icon)
+            : base(nameof(CreatureExcitedState))
+        {
+            m_icon = icon;
+        }
+
+        protected override void OnEnter()
+        {
+            m_icon.SetActive(true);
+            m_exitTime = DateTime.UtcNow.AddSeconds(UnityEngine.Random.Range(2, 3));
+        }
+
+        protected override void OnExit()
+        {
+            m_icon.SetActive(false);
             m_exitTime = DateTime.MinValue;
         }
 
@@ -366,7 +409,47 @@ public class Creature : MonoBehaviour
                 return;
             }
         }
+    }
 
+    private class CreatureHungryState : AbstractState
+    {
+        private readonly GameObject m_icon = null;
+        private DateTime m_exitTime = DateTime.MinValue;
+
+        public CreatureHungryState(GameObject icon)
+            : base(nameof(CreatureHungryState))
+        {
+            m_icon = icon;
+        }
+
+        protected override void OnEnter()
+        {
+            m_icon.SetActive(true);
+            m_exitTime = DateTime.UtcNow.AddSeconds(UnityEngine.Random.Range(3, 4));
+        }
+
+        protected override void OnExit()
+        {
+            m_icon.SetActive(false);
+            m_exitTime = DateTime.MinValue;
+        }
+
+        protected override void OnUpdate()
+        {
+            // ZAS: If there is a bell, then we want to get moving!
+            if (m_blackboardValues.ContainsKey(LAST_BELL))
+            {
+                ExitToState(nameof(CreatureMoveState));
+                return;
+            }
+
+            // ZAS: If our random timer is expired, do something else
+            if (DateTime.UtcNow > m_exitTime)
+            {
+                ExitToState(nameof(CreatureMoveState));
+                return;
+            }
+        }
     }
 }
 
