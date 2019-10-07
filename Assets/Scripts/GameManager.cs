@@ -123,7 +123,7 @@ public class GameManager : MonoBehaviour, IInteractionSource
 
     private void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (InputUtility.DidTouchBegin())
         {
             var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
@@ -142,24 +142,6 @@ public class GameManager : MonoBehaviour, IInteractionSource
 
             m_interactiveObject?.BeginInteraction(this);
         }
-
-#if UNITY_IOS || UNITY_ANDROID
-        if (Input.touchCount > 0)
-        {
-            var touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began)
-            {
-                var ray = Camera.main.ScreenPointToRay(touch.position);
-
-                m_plane.Raycast(ray, out float enter);
-
-                var intersect = ray.GetPoint(enter);
-                Debug.DrawLine(ray.origin, intersect, Color.green, 15f);
-
-                m_interactiveObject?.BeginInteraction(this);
-            }
-        }
-#endif
     }
 
 
